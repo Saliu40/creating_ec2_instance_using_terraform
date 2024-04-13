@@ -2,5 +2,5 @@
 terraform init
 terraform fmt
 terraform validate
-terraform plan
+terraform plan > plan.sh
 terraform apply --auto-approve
