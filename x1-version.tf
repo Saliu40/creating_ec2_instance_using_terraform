@@ -1,16 +1,10 @@
-
-#Provider Blocks
-
+# Provider Block
 provider "aws" {
-  profile = "default" #AWS credencial comes in
+  profile = "default"
   region  = "us-east-1"
-
 }
 
-#recource Blocks
-#note: the script can be updated without terminating the running instance,
-#after updating our terraform script with update on a running instance, we just need to rerun apply.sh(but excluding terraform apply ) 
-#creating a security group for the instance
+# Security Group
 resource "aws_security_group" "Saliu_sg" {
   name        = "Saliu-ssh-sg"
   description = "vpc ssh"
@@ -21,10 +15,16 @@ resource "aws_security_group" "Saliu_sg" {
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-
   }
-  #ingress is inbound rule while egress is outbound rule
-  #we can add more port by simply copying and pasting the existing format and change the port numbers to the new ports
+
+  ingress {
+    description = "Allow port 8080"
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     description = "Allow All"
     from_port   = 0
@@ -38,14 +38,28 @@ resource "aws_security_group" "Saliu_sg" {
   }
 }
 
-#creating an instance
+# EC2 Instance
 resource "aws_instance" "ec2_server" {
-  ami             = "ami-080e1f13689e07408"
-  instance_type   = "t2.micro"
-  security_groups = [aws_security_group.Saliu_sg.name]
-  key_name        = "Saliu_key"
-  # user_data     = file("install_ansible.sh")
+  ami           = "ami-080e1f13689e07408"
+  instance_type = "t2.micro"
+  key_name      = "saliu_key"
+
   tags = {
-    Name = "Saliu_server"
+    Name = "Saliu_jenkins"
   }
+}
+
+# S3 Bucket
+resource "aws_s3_bucket" "Saliu_bucket" {
+  bucket = "saliu-bucket" # Replace with a globally unique name
+
+  tags = {
+    Name = "Saliu_bucket"
+  }
+}
+
+# S3 Bucket ACL
+resource "aws_s3_bucket_acl" "Saliu_bucket_acl" {
+  bucket = aws_s3_bucket.Saliu_bucket.id
+  acl    = "private"
 }
